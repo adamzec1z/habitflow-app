@@ -1,0 +1,295 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { router } from 'expo-router';
+import { useEffect, useState } from 'react';
+import {
+    Alert,
+    StyleSheet,
+    Switch,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
+
+export default function SettingsScreen() {
+  const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [darkMode, setDarkMode] = useState(false);
+
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
+  async function loadSettings() {
+    const storedVoice = await AsyncStorage.getItem('voiceEnabled');
+    const storedNotifications = await AsyncStorage.getItem(
+      'notificationsEnabled'
+    );
+    const storedDarkMode = await AsyncStorage.getItem('darkMode');
+
+    if (storedVoice !== null) {
+      setVoiceEnabled(storedVoice === 'true');
+    }
+
+    if (storedNotifications !== null) {
+      setNotificationsEnabled(storedNotifications === 'true');
+    }
+
+    if (storedDarkMode !== null) {
+      setDarkMode(storedDarkMode === 'true');
+    }
+  }
+
+  async function saveVoiceSetting(value: boolean) {
+    setVoiceEnabled(value);
+    await AsyncStorage.setItem('voiceEnabled', String(value));
+  }
+
+  async function saveNotificationSetting(value: boolean) {
+    setNotificationsEnabled(value);
+    await AsyncStorage.setItem(
+      'notificationsEnabled',
+      String(value)
+    );
+  }
+
+  async function saveDarkModeSetting(value: boolean) {
+    setDarkMode(value);
+    await AsyncStorage.setItem('darkMode', String(value));
+  }
+
+  async function clearAllData() {
+    await AsyncStorage.clear();
+
+    Alert.alert(
+      'Data cleared',
+      'All habits, moods, and settings have been deleted.'
+    );
+
+    router.back();
+  }
+
+  return (
+    <View
+      style={[
+        styles.container,
+        darkMode && styles.darkContainer,
+      ]}
+    >
+      <Text
+        style={[
+          styles.title,
+          darkMode && styles.darkTitle,
+        ]}
+      >
+        Settings
+      </Text>
+
+      <View
+        style={[
+          styles.card,
+          darkMode && styles.darkCard,
+        ]}
+      >
+        <View style={styles.settingRow}>
+          <View>
+            <Text
+              style={[
+                styles.settingTitle,
+                darkMode && styles.darkTitle,
+              ]}
+            >
+              Dark mode
+            </Text>
+
+            <Text
+              style={[
+                styles.settingText,
+                darkMode && styles.darkText,
+              ]}
+            >
+              Use a darker theme for better viewing comfort.
+            </Text>
+          </View>
+
+          <Switch
+            value={darkMode}
+            onValueChange={saveDarkModeSetting}
+          />
+        </View>
+
+        <View style={styles.settingRow}>
+          <View>
+            <Text
+              style={[
+                styles.settingTitle,
+                darkMode && styles.darkTitle,
+              ]}
+            >
+              Voice reminders
+            </Text>
+
+            <Text
+              style={[
+                styles.settingText,
+                darkMode && styles.darkText,
+              ]}
+            >
+              Read habit reminders aloud.
+            </Text>
+          </View>
+
+          <Switch
+            value={voiceEnabled}
+            onValueChange={saveVoiceSetting}
+          />
+        </View>
+
+        <View style={styles.settingRow}>
+          <View>
+            <Text
+              style={[
+                styles.settingTitle,
+                darkMode && styles.darkTitle,
+              ]}
+            >
+              Notifications
+            </Text>
+
+            <Text
+              style={[
+                styles.settingText,
+                darkMode && styles.darkText,
+              ]}
+            >
+              Show reminder notifications.
+            </Text>
+          </View>
+
+          <Switch
+            value={notificationsEnabled}
+            onValueChange={saveNotificationSetting}
+          />
+        </View>
+      </View>
+
+      <TouchableOpacity
+        style={styles.deleteButton}
+        onPress={clearAllData}
+      >
+        <Text style={styles.deleteButtonText}>
+          Clear All Data
+        </Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[
+          styles.backButton,
+          darkMode && styles.darkBackButton,
+        ]}
+        onPress={() => router.back()}
+      >
+        <Text
+          style={[
+            styles.backButtonText,
+            darkMode && styles.darkButtonText,
+          ]}
+        >
+          Back
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: '#F6F7FB',
+  },
+
+  darkContainer: {
+    backgroundColor: '#121212',
+  },
+
+  title: {
+    fontSize: 34,
+    fontWeight: 'bold',
+    marginTop: 60,
+    marginBottom: 24,
+    color: '#222',
+  },
+
+  darkTitle: {
+    color: '#FFFFFF',
+  },
+
+  card: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 18,
+    marginBottom: 24,
+  },
+
+  darkCard: {
+    backgroundColor: '#1E1E1E',
+  },
+
+  settingRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+
+  settingTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#222',
+  },
+
+  settingText: {
+    color: '#666',
+    marginTop: 4,
+    maxWidth: 220,
+  },
+
+  darkText: {
+    color: '#CCCCCC',
+  },
+
+  deleteButton: {
+    backgroundColor: '#FF4D4D',
+    padding: 16,
+    borderRadius: 14,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+
+  deleteButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+
+  backButton: {
+    backgroundColor: '#E8ECFF',
+    padding: 16,
+    borderRadius: 14,
+    alignItems: 'center',
+  },
+
+  darkBackButton: {
+    backgroundColor: '#2A2A2A',
+  },
+
+  backButtonText: {
+    color: '#4C6FFF',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+
+  darkButtonText: {
+    color: '#FFFFFF',
+  },
+});

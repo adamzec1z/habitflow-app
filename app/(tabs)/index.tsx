@@ -471,7 +471,6 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: 'bold',
     color: '#7DEBFF',
-    fontFamily: 'PixelifySans_400Regular',
   },
 
   statLabel: {
@@ -570,6 +569,8 @@ const styles = StyleSheet.create({
   habitDetails: {
     color: '#666',
     marginTop: 4,
+    fontFamily: 'PixelifySans_400Regular',
+
   },
 
   checkMark: {

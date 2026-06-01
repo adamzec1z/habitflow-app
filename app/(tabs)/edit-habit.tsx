@@ -3,12 +3,12 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
-    Alert,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
 type Habit = {
@@ -230,7 +230,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F4F5F9',
     padding: 20,
-    justifyContent: 'center',
   },
 
   darkContainer: {
@@ -241,11 +240,16 @@ const styles = StyleSheet.create({
     fontSize: 34,
     fontWeight: 'bold',
     marginBottom: 30,
+    marginTop: 60,
     color: '#111',
+    fontFamily: 'PixelifySans_400Regular',
+    textAlign: 'center',
+
   },
 
   darkTitle: {
     color: '#FFFFFF',
+    fontFamily: 'PixelifySans_400Regular',
   },
 
   label: {
@@ -253,29 +257,35 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 8,
     color: '#222',
+    fontFamily: 'PixelifySans_400Regular',
   },
 
   input: {
-    backgroundColor: 'white',
-    padding: 16,
-    borderRadius: 14,
-    marginBottom: 16,
-    fontSize: 16,
-    color: '#111',
+    backgroundColor: '#FFF4C7',
+    borderWidth: 4,
+    borderColor: '#2B2B2B',
+    borderRadius: 0,
+    padding: 14,
+    marginBottom: 18,
+    color: '#FFFFFF',
+    fontFamily: 'PixelifySans_400Regular',
   },
 
   darkInput: {
     backgroundColor: '#1E1E1E',
     color: '#FFFFFF',
+    fontFamily: 'PixelifySans_400Regular',
   },
 
   darkInputText: {
     color: '#FFFFFF',
+    fontFamily: 'PixelifySans_400Regular',
   },
 
   timeText: {
+    color: '#2B2B2B',
+    fontFamily: 'PixelifySans_400Regular',
     fontSize: 16,
-    color: '#111',
   },
 
   timePickerBox: {
@@ -306,6 +316,7 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
     fontSize: 16,
+    fontFamily: 'PixelifySans_400Regular',
   },
 
   button: {
@@ -320,5 +331,8 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 18,
     fontWeight: 'bold',
+    fontFamily: 'PixelifySans_400Regular',
   },
+
+
 });

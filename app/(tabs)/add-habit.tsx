@@ -3,12 +3,12 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
-    Alert,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
 export default function AddHabitScreen() {
@@ -223,7 +223,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#F6F7FB',
+    backgroundColor: '#ffffff',
   },
 
   darkContainer: {
@@ -232,9 +232,10 @@ const styles = StyleSheet.create({
 
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
+    color: '#121212',
+    textAlign: 'center',
     marginTop: 60,
-    color: '#222',
+    fontFamily: 'PixelifySans_400Regular',
   },
 
   darkTitle: {
@@ -242,9 +243,12 @@ const styles = StyleSheet.create({
   },
 
   subtitle: {
-    fontSize: 16,
-    color: '#666',
+    fontSize: 12,
+    color: '#ffffff',
+    textAlign: 'center',
     marginBottom: 30,
+    textTransform: 'uppercase',
+    fontFamily: 'PixelifySans_400Regular',
   },
 
   darkText: {
@@ -252,24 +256,27 @@ const styles = StyleSheet.create({
   },
 
   label: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    color: '#000000',
     marginBottom: 8,
-    color: '#222',
+    fontSize: 14,
+    fontFamily: 'PixelifySans_400Regular',
   },
 
   input: {
-    backgroundColor: 'white',
+    backgroundColor: '#FFF4C7',
+    borderWidth: 4,
+    borderColor: '#2B2B2B',
+    borderRadius: 0,
     padding: 14,
-    borderRadius: 12,
     marginBottom: 18,
-    fontSize: 16,
-    color: '#111',
+    color: '#FFFFFF',
+    fontFamily: 'PixelifySans_400Regular',
   },
 
   darkInput: {
     backgroundColor: '#1E1E1E',
     color: '#FFFFFF',
+    
   },
 
   darkInputText: {
@@ -278,7 +285,8 @@ const styles = StyleSheet.create({
 
   timeText: {
     fontSize: 16,
-    color: '#111',
+    color: '#2B2B2B',
+    fontFamily: 'PixelifySans_400Regular',
   },
 
   timePickerBox: {
@@ -309,6 +317,7 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
     fontSize: 16,
+    fontFamily: 'PixelifySans_400Regular',
   },
 
   button: {
@@ -322,6 +331,7 @@ const styles = StyleSheet.create({
   buttonText: {
     color: 'white',
     fontWeight: 'bold',
-    fontSize: 16,
+    fontSize: 18,
+    fontFamily: 'PixelifySans_400Regular',
   },
 });

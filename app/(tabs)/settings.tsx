@@ -2,12 +2,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
-    Alert,
-    StyleSheet,
-    Switch,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  StyleSheet,
+  Switch,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
 export default function SettingsScreen() {
@@ -210,6 +210,8 @@ const styles = StyleSheet.create({
 
   darkContainer: {
     backgroundColor: '#121212',
+    flex: 1,
+    padding: 20,
   },
 
   title: {
@@ -218,17 +220,22 @@ const styles = StyleSheet.create({
     marginTop: 60,
     marginBottom: 24,
     color: '#222',
+    textAlign: 'center',
+    fontFamily: 'PixelifySans_400Regular',
   },
 
   darkTitle: {
     color: '#FFFFFF',
+    fontFamily: 'PixelifySans_400Regular',
   },
 
   card: {
-    backgroundColor: 'white',
+    backgroundColor: '#FFF4C7',
+    borderWidth: 4,
+    borderColor: '#2B2B2B',
+    borderRadius: 0,
     padding: 20,
-    borderRadius: 18,
-    marginBottom: 24,
+      marginBottom: 24,
   },
 
   darkCard: {
@@ -246,16 +253,19 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#222',
+    fontFamily: 'PixelifySans_400Regular',
   },
 
   settingText: {
     color: '#666',
     marginTop: 4,
     maxWidth: 220,
+    fontFamily: 'PixelifySans_400Regular',
   },
 
   darkText: {
     color: '#CCCCCC',
+    fontFamily: 'PixelifySans_400Regular',
   },
 
   deleteButton: {
@@ -270,6 +280,7 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
     fontSize: 16,
+    fontFamily: 'PixelifySans_400Regular',
   },
 
   backButton: {
@@ -287,6 +298,7 @@ const styles = StyleSheet.create({
     color: '#4C6FFF',
     fontWeight: 'bold',
     fontSize: 16,
+    fontFamily: 'PixelifySans_400Regular',
   },
 
   darkButtonText: {

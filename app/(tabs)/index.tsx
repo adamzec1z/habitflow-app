@@ -1,3 +1,4 @@
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { router, useFocusEffect } from 'expo-router';
@@ -5,12 +6,20 @@ import * as Speech from 'expo-speech';
 import { useCallback, useState } from 'react';
 import {
   Alert,
+  Image,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
+
+import {
+  PixelifySans_400Regular,
+} from '@expo-google-fonts/pixelify-sans';
+import {
+  useFonts,
+} from 'expo-font';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -35,11 +44,39 @@ export default function HomeScreen() {
   const [selectedMood, setSelectedMood] = useState('');
   const [darkMode, setDarkMode] = useState(false);
 
+  const [fontsLoaded] = useFonts({
+  PixelifySans_400Regular,
+  });
+
+  const moods = [
+    {
+      id: 'happy',
+      image: require('../../assets/images/moods/happy.png'),
+    },
+    {
+      id: 'neutral',
+      image: require('../../assets/images/moods/neutral.png'),
+    },
+    {
+      id: 'sad',
+      image: require('../../assets/images/moods/sad.png'),
+    },
+    {
+      id: 'sleepy',
+      image: require('../../assets/images/moods/sleepy.png'),
+    },
+  ];
+
+
   useFocusEffect(
     useCallback(() => {
       loadHabits();
     }, [])
   );
+
+  if (!fontsLoaded) {
+    return null;
+  }
 
   async function loadHabits() {
     const storedHabits = await AsyncStorage.getItem('habits');
@@ -179,9 +216,9 @@ async function startVoiceReminder(
       <Text style={[styles.title, darkMode && styles.darkTitle]}>
         HabitFlow
       </Text>
-
+      
       <Text style={[styles.subtitle, darkMode && styles.darkText]}>
-        Today&apos;s Habits
+        Build habits. Keep streaks. Level up.
       </Text>
 
       <TouchableOpacity
@@ -203,22 +240,22 @@ async function startVoiceReminder(
 
       <View style={styles.statsRow}>
         <View style={[styles.statCard, darkMode && styles.darkCard]}>
-          <Text style={styles.statNumber}>{progress}%</Text>
-          <Text style={[styles.statLabel, darkMode && styles.darkText]}>
+          <Text style={[styles.statNumber, darkMode && styles.darkStatNumber]}>{progress}%</Text>
+          <Text style={[styles.statLabel, darkMode && styles.darkStatLabel]}>
             Progress
           </Text>
         </View>
 
         <View style={[styles.statCard, darkMode && styles.darkCard]}>
-          <Text style={styles.statNumber}>{habits.length}</Text>
-          <Text style={[styles.statLabel, darkMode && styles.darkText]}>
+          <Text style={[styles.statNumber, darkMode && styles.darkStatNumber]}>{habits.length}</Text>
+          <Text style={[styles.statLabel, darkMode && styles.darkStatLabel]}>
             Habits
           </Text>
         </View>
 
         <View style={[styles.statCard, darkMode && styles.darkCard]}>
-          <Text style={styles.statNumber}>{completedCount}</Text>
-          <Text style={[styles.statLabel, darkMode && styles.darkText]}>
+          <Text style={[styles.statNumber, darkMode && styles.darkStatNumber]}>{completedCount}</Text>
+          <Text style={[styles.statLabel, darkMode && styles.darkStatLabel]}>
             Completed
           </Text>
         </View>
@@ -270,9 +307,14 @@ async function startVoiceReminder(
                 </View>
 
                 <TouchableOpacity onPress={() => toggleHabit(habit.id)}>
-                  <Text style={styles.checkMark}>
-                    {habit.completed ? '✅' : '⭕'}
-                  </Text>
+                  <Image
+                    source={
+                      habit.completed
+                        ? require('../../assets/images/tick.png')
+                        : require('../../assets/images/cross.png')
+                    }
+                    style={styles.pixelCheck}
+                  />
                 </TouchableOpacity>
               </View>
 
@@ -324,20 +366,23 @@ async function startVoiceReminder(
           How are you feeling today?
         </Text>
 
-        <View style={styles.moodRow}>
-          {['😊', '😐', '😔', '😴'].map((mood) => (
-            <TouchableOpacity
-              key={mood}
-              style={[
-                styles.moodButton,
-                selectedMood === mood && styles.selectedMoodButton,
-              ]}
-              onPress={() => saveMood(mood)}
-            >
-              <Text style={styles.mood}>{mood}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+      <View style={styles.moodRow}>
+        {moods.map((mood) => (
+          <TouchableOpacity
+            key={mood.id}
+            onPress={() => setSelectedMood(mood.id)}
+            style={[
+              styles.moodButton,
+              selectedMood === mood.id && styles.selectedMood,
+        ]}
+    >
+      <Image
+        source={mood.image}
+        style={styles.moodIcon}
+      />
+    </TouchableOpacity>
+  ))}
+</View>
 
         {selectedMood !== '' && (
           <Text style={styles.selectedMoodText}>
@@ -353,7 +398,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#F6F7FB',
+    backgroundColor: '#ffffff',
   },
 
   darkContainer: {
@@ -361,24 +406,30 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    fontSize: 34,
+    fontSize: 30,
     fontWeight: 'bold',
     marginTop: 40,
-    color: '#222',
+    color: '#1A1C2C',
+    textAlign: 'center',
+    letterSpacing: 1,
+    fontFamily: 'PixelifySans_400Regular',
   },
 
   darkTitle: {
-    color: '#FFFFFF',
+    color: '#F4F4F4',
   },
 
   subtitle: {
-    fontSize: 18,
-    color: '#666',
+    fontSize: 12,
+    color: '#5A5A5A',
     marginBottom: 20,
+    textAlign: 'center',
+    textTransform: 'uppercase',
+    fontFamily: 'PixelifySans_400Regular',
   },
 
   darkText: {
-    color: '#CCCCCC',
+    color: '#9BADB7',
   },
 
   statsRow: {
@@ -389,25 +440,52 @@ const styles = StyleSheet.create({
 
   statCard: {
     flex: 1,
-    backgroundColor: 'white',
-    padding: 15,
-    borderRadius: 16,
+    backgroundColor: '#FFF4C7',
+    padding: 14,
+    borderWidth: 4,
+    borderColor: '#2B2B2B',
+    borderRadius: 0,
     alignItems: 'center',
+    shadowColor: '#2B2B2B',
+    shadowOffset: {
+      width: 4,
+      height: 4,
+    },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 6,
   },
 
   darkCard: {
-    backgroundColor: '#1E1E1E',
+    backgroundColor: '#252736',
+    borderColor: '#414361',
   },
 
   statNumber: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#4C6FFF',
+    color: '#000000',
+  },
+
+  darkStatNumber: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#7DEBFF',
+    fontFamily: 'PixelifySans_400Regular',
   },
 
   statLabel: {
     fontSize: 12,
-    color: '#666',
+    color: '#5e5d5d',
+    textTransform: 'uppercase',
+    fontFamily: 'PixelifySans_400Regular',
+  },
+
+  darkStatLabel: {
+    fontSize: 12,
+    color: '#DDE5FF',
+    textTransform: 'uppercase',
+    fontFamily: 'PixelifySans_400Regular',
   },
 
   progressContainer: {
@@ -449,10 +527,20 @@ const styles = StyleSheet.create({
   },
 
   habitCard: {
-    backgroundColor: 'white',
+    backgroundColor: '#FFF4C7',
     padding: 18,
-    borderRadius: 16,
-    marginBottom: 12,
+    borderWidth: 4,
+    borderColor: '#2B2B2B',
+    borderRadius: 0,
+    marginBottom: 16,
+    shadowColor: '#2B2B2B',
+    shadowOffset: {
+      width: 4,
+      height: 4,
+    },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 6,
   },
 
   habitTopRow: {
@@ -476,6 +564,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#222',
+    fontFamily: 'PixelifySans_400Regular',
   },
 
   habitDetails: {
@@ -499,6 +588,7 @@ const styles = StyleSheet.create({
   buttonText: {
     color: 'white',
     fontWeight: 'bold',
+    fontFamily: 'PixelifySans_400Regular',
   },
 
   reminderButton: {
@@ -511,6 +601,7 @@ const styles = StyleSheet.create({
   reminderButtonText: {
     color: 'white',
     fontWeight: 'bold',
+    fontFamily: 'PixelifySans_400Regular',
     fontSize: 13,
   },
 
@@ -524,20 +615,32 @@ const styles = StyleSheet.create({
   editButtonText: {
     color: '#4C6FFF',
     fontWeight: 'bold',
+    fontFamily: 'PixelifySans_400Regular',
     fontSize: 13,
   },
 
   deleteText: {
     color: '#FF4D4D',
     fontWeight: 'bold',
+    fontFamily: 'PixelifySans_400Regular',
     fontSize: 15,
   },
 
   moodCard: {
-    backgroundColor: 'white',
+    backgroundColor: '#FFF4C7',
     padding: 20,
-    borderRadius: 18,
+    borderWidth: 4,
+    borderColor: '#2B2B2B',
+    borderRadius: 0,
     marginBottom: 20,
+    shadowColor: '#2B2B2B',
+    shadowOffset: {
+      width: 4,
+      height: 4,
+    },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 6,
   },
 
   cardTitle: {
@@ -545,11 +648,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 12,
     color: '#222',
+    fontFamily: 'PixelifySans_400Regular',
   },
 
   moodRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
+    gap: 0,
   },
 
   moodButton: {
@@ -557,7 +662,13 @@ const styles = StyleSheet.create({
     borderRadius: 14,
   },
 
-  selectedMoodButton: {
+  moodIcon: {
+    width: 65,
+    height: 70,
+    resizeMode: 'contain',
+},
+
+  selectedMood: {
     backgroundColor: '#DDE5FF',
     borderWidth: 2,
     borderColor: '#4C6FFF',
@@ -572,6 +683,7 @@ const styles = StyleSheet.create({
     color: '#4C6FFF',
     fontWeight: 'bold',
     fontSize: 16,
+    fontFamily: 'PixelifySans_400Regular',
   },
 
   settingsButton: {
@@ -589,9 +701,17 @@ const styles = StyleSheet.create({
   settingsButtonText: {
     color: '#4C6FFF',
     fontWeight: 'bold',
+    fontFamily: 'PixelifySans_400Regular',
   },
 
   darkButtonText: {
     color: '#FFFFFF',
+    fontFamily: 'PixelifySans_400Regular',
+  },
+
+  pixelCheck: {
+    width: 36,
+    height: 36,
+    resizeMode: 'contain',
   },
 });

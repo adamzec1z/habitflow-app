@@ -267,7 +267,7 @@ const styles = StyleSheet.create({
     borderRadius: 0,
     padding: 14,
     marginBottom: 18,
-    color: '#FFFFFF',
+    color: '#000000',
     fontFamily: 'PixelifySans_400Regular',
   },
 

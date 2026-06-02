@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import * as Notifications from 'expo-notifications';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
@@ -12,6 +13,132 @@ import {
 } from 'react-native';
 import { auth } from '../services/firebase';
 import { createHabit } from '../services/habitService';
+
+function getReminderDate(reminderTime: string) {
+  if (!reminderTime) {
+    return null;
+  }
+
+  const cleanedTime = reminderTime
+    .replace(/\u202f/g, ' ')
+    .replace(/\u00a0/g, ' ')
+    .trim();
+
+  const parts = cleanedTime.split(' ');
+
+  if (parts.length < 2) {
+    return null;
+  }
+
+  const time = parts[0];
+  const modifier = parts[1].toUpperCase();
+
+  const [hourText, minuteText] = time.split(':');
+
+  let hour = Number(hourText);
+  const minute = Number(minuteText);
+
+  if (Number.isNaN(hour) || Number.isNaN(minute)) {
+    return null;
+  }
+
+  if (modifier === 'PM' && hour !== 12) {
+    hour = hour + 12;
+  }
+
+  if (modifier === 'AM' && hour === 12) {
+    hour = 0;
+  }
+
+  const reminderDate = new Date();
+  reminderDate.setHours(hour);
+  reminderDate.setMinutes(minute);
+  reminderDate.setSeconds(0);
+  reminderDate.setMilliseconds(0);
+
+  if (reminderDate <= new Date()) {
+    reminderDate.setDate(reminderDate.getDate() + 1);
+  }
+
+  return reminderDate;
+}
+
+async function scheduleHabitReminder(
+  habitName: string,
+  reminderTime: string
+) {
+  const storedVoice = await AsyncStorage.getItem('voiceEnabled');
+  const storedNotifications = await AsyncStorage.getItem(
+    'notificationsEnabled'
+  );
+
+  const voiceEnabled =
+    storedVoice === null ? true : storedVoice === 'true';
+
+  const notificationsEnabled =
+    storedNotifications === null
+      ? true
+      : storedNotifications === 'true';
+
+  if (!voiceEnabled || !notificationsEnabled) {
+    console.log(
+      'Habit reminder not scheduled because reminders are turned off.'
+    );
+    return '';
+  }
+
+  if (!reminderTime) {
+    console.log(
+      'Habit reminder not scheduled because no reminder time was selected.'
+    );
+    return '';
+  }
+
+  const permission = await Notifications.requestPermissionsAsync();
+
+  if (!permission.granted) {
+    Alert.alert(
+      'Permission required',
+      'Please allow notifications to receive habit reminders.'
+    );
+    return '';
+  }
+
+  const reminderDate = getReminderDate(reminderTime);
+
+  if (!reminderDate) {
+    console.log('Invalid reminder time:', reminderTime);
+    return '';
+  }
+
+  await Notifications.setNotificationChannelAsync('habit-reminders', {
+    name: 'Habit reminders',
+    importance: Notifications.AndroidImportance.HIGH,
+    sound: 'default',
+  });
+
+  const notificationId = await Notifications.scheduleNotificationAsync({
+    content: {
+      title: 'HabitFlow Reminder',
+      body: `Time to complete your ${habitName} habit`,
+      sound: true,
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.DATE,
+      date: reminderDate,
+    },
+  });
+
+  console.log(
+    'Reminder scheduled:',
+    habitName,
+    reminderTime,
+    reminderDate.toString(),
+    notificationId
+  );
+
+  return notificationId;
+}
 
 export default function AddHabitScreen() {
   const [name, setName] = useState('');
@@ -60,9 +187,15 @@ export default function AddHabitScreen() {
       return;
     }
 
+    const notificationId = await scheduleHabitReminder(
+      name.trim(),
+      reminderTime
+    );
+
     const newHabit = {
       id: Date.now().toString(),
       firestoreId: '',
+      notificationId: notificationId,
       name: name.trim(),
       category: category.trim(),
       reminderTime: reminderTime,
@@ -102,7 +235,9 @@ export default function AddHabitScreen() {
 
     Alert.alert(
       'Habit saved',
-      'Your habit has been added.'
+      reminderTime
+        ? 'Your habit has been added and its reminder was scheduled.'
+        : 'Your habit has been added.'
     );
 
     router.back();

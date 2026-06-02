@@ -43,6 +43,7 @@ type Habit = {
   reminderTime: string;
   completed: boolean;
   streak?: number;
+  lastCompletedDate?: string;
 };
 
 export default function HomeScreen() {
@@ -140,20 +141,39 @@ export default function HomeScreen() {
   }
 
   async function toggleHabit(id: string) {
+    const now = new Date();
+
+    const today =
+      String(now.getDate()).padStart(2, '0') +
+      '/' +
+      String(now.getMonth() + 1).padStart(2, '0') +
+      '/' +
+      now.getFullYear();
     const updatedHabits = habits.map((habit) => {
       if (habit.id === id) {
-        return {
-          ...habit,
-          completed: !habit.completed,
-        };
-      }
+        if (!habit.completed) {
+          return {
+            ...habit,
+            completed: true,
+            streak: (habit.streak || 0) + 1,
+            lastCompletedDate: today,
+          };
+        }
 
-      return habit;
-    });
+      return {
+        ...habit,
+        completed: false,
+      };
+    }
 
-    setHabits(updatedHabits);
-    await AsyncStorage.setItem('habits', JSON.stringify(updatedHabits));
-  }
+    return habit;
+  });
+
+
+
+  setHabits(updatedHabits);
+  await AsyncStorage.setItem('habits', JSON.stringify(updatedHabits));
+}
 
   async function saveMood(mood: string) {
     setSelectedMood(mood);
@@ -222,18 +242,33 @@ export default function HomeScreen() {
         );
         return;
       }
+      
 
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title: 'HabitFlow Reminder',
-          body: `${message} at ${reminderTime || 'your selected time'}`,
-        },
-        trigger: {
-          type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-          seconds: 5,
-        },
-      });
-    }
+
+      let hour = parseInt(reminderTime.split(':')[0]);
+      let minute = parseInt(reminderTime.split(':')[1]);
+
+        if (reminderTime.includes('PM') && hour !== 12) {
+          hour += 12;
+      }
+
+        if (reminderTime.includes('AM') && hour === 12) {
+          hour = 0;
+      }
+
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: 'HabitFlow Reminder',
+        body: `${message} at ${reminderTime || 'your selected time'}`,
+      },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.CALENDAR,
+        hour: hour,
+        minute: minute,
+        repeats: true,
+      },
+    });
+  }
 
     Alert.alert(
       'Reminder scheduled',
@@ -351,6 +386,23 @@ export default function HomeScreen() {
                   <Text style={[styles.habitDetails, darkMode && styles.darkText]}>
                     {habit.category || 'No category'} •{' '}
                     {habit.reminderTime || 'No reminder'}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.habitDetails,
+                      darkMode && styles.darkHabitDetails,
+                    ]}
+                  >
+                    🔥 Streak: {habit.streak || 0} days
+                  </Text>
+
+                  <Text
+                    style={[
+                    styles.habitDetails,
+                    darkMode && styles.darkHabitDetails,
+                  ]}
+                  >
+                    Last completed: {habit.lastCompletedDate || 'Never'}
                   </Text>
                 </View>
 
@@ -761,5 +813,10 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     resizeMode: 'contain',
+  },
+
+  darkHabitDetails: {
+    color: '#9BADB7',
+    fontFamily: 'PixelifySans_400Regular',
   },
 });

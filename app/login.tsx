@@ -9,8 +9,9 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { registerUser } from '../../services/authService';
-export default function SignUpScreen() {
+import { loginUser } from '../services/authService';
+
+export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [darkMode, setDarkMode] = useState(false);
@@ -29,22 +30,29 @@ export default function SignUpScreen() {
     }
   }
 
-  async function handleSignUp() {
+  async function handleLogin() {
     try {
-      await registerUser(email, password);
+      await loginUser(email, password);
+
+      await AsyncStorage.setItem('demoMode', 'false');
 
       Alert.alert(
-        'Account created',
-        'Your HabitFlow account has been created.'
+        'Login successful',
+        'You are now logged in.'
       );
 
-      router.replace('/(tabs)');
+      router.replace('/home');
     } catch (error: any) {
       Alert.alert(
-        'Sign-up error',
-        error.message || 'Could not create account.'
+        'Login error',
+        error.message || 'Could not log in.'
       );
     }
+  }
+
+  async function handleDemoUser() {
+    await AsyncStorage.setItem('demoMode', 'true');
+    router.replace('/home');
   }
 
   return (
@@ -54,7 +62,7 @@ export default function SignUpScreen() {
       </Text>
 
       <Text style={[styles.subtitle, darkMode && styles.darkText]}>
-        Create your account
+        Login to your account
       </Text>
 
       <Text style={[styles.label, darkMode && styles.darkTitle]}>
@@ -84,22 +92,22 @@ export default function SignUpScreen() {
         secureTextEntry
       />
 
-      <TouchableOpacity style={styles.button} onPress={handleSignUp}>
+      <TouchableOpacity style={styles.button} onPress={handleLogin}>
         <Text style={styles.buttonText}>
-          Sign Up
+          Login
         </Text>
       </TouchableOpacity>
 
       <TouchableOpacity
         style={[styles.secondaryButton, darkMode && styles.darkSecondaryButton]}
-        onPress={() => router.push('/login')}
+        onPress={() => router.push('/signup')}
       >
         <Text style={[styles.secondaryButtonText, darkMode && styles.darkButtonText]}>
-          Already have an account? Login
+          Need an account? Sign up
         </Text>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => router.replace('/(tabs)')}>
+      <TouchableOpacity onPress={handleDemoUser}>
         <Text style={styles.link}>
           Continue as demo user
         </Text>

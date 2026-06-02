@@ -3,7 +3,6 @@ import * as Notifications from 'expo-notifications';
 import { router, useFocusEffect } from 'expo-router';
 import * as Speech from 'expo-speech';
 import { useCallback, useState } from 'react';
-import { deleteHabit as deleteHabitFromFirestore } from '../../services/habitService';
 import {
   Alert,
   Image,
@@ -20,6 +19,12 @@ import {
 import {
   useFonts,
 } from 'expo-font';
+
+import { auth } from '../../services/firebase';
+import {
+  deleteHabit as deleteHabitFromFirestore,
+  getUserHabits,
+} from '../../services/habitService';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -79,13 +84,9 @@ export default function HomeScreen() {
   }
 
   async function loadHabits() {
-    const storedHabits = await AsyncStorage.getItem('habits');
-    const savedHabits = storedHabits ? JSON.parse(storedHabits) : [];
-
-    setHabits(savedHabits);
-
     const storedMood = await AsyncStorage.getItem('todayMood');
     const storedDarkMode = await AsyncStorage.getItem('darkMode');
+    const storedDemoMode = await AsyncStorage.getItem('demoMode');
 
     if (storedMood) {
       setSelectedMood(storedMood);
@@ -93,6 +94,48 @@ export default function HomeScreen() {
 
     if (storedDarkMode !== null) {
       setDarkMode(storedDarkMode === 'true');
+    }
+
+    try {
+      const userId = auth.currentUser?.uid;
+      const isDemoMode = storedDemoMode === 'true';
+
+      if (userId && !isDemoMode) {
+        const firestoreHabits = await getUserHabits(userId);
+
+        const mappedHabits = firestoreHabits.map((habit) => ({
+          id: habit.id,
+          firestoreId: habit.id,
+          name: habit.name,
+          category: habit.category,
+          reminderTime: habit.reminderTime || '',
+          completed: habit.completedToday || false,
+          streak: 0,
+        }));
+
+        setHabits(mappedHabits);
+
+        await AsyncStorage.setItem(
+          'habits',
+          JSON.stringify(mappedHabits)
+        );
+
+        console.log('Habits fetched from Firestore');
+        return;
+      }
+
+      const storedHabits = await AsyncStorage.getItem('habits');
+      const savedHabits = storedHabits ? JSON.parse(storedHabits) : [];
+
+      setHabits(savedHabits);
+      console.log('Demo/local habits loaded from AsyncStorage');
+    } catch (error) {
+      console.log('Firestore fetch failed, loading local habits:', error);
+
+      const storedHabits = await AsyncStorage.getItem('habits');
+      const savedHabits = storedHabits ? JSON.parse(storedHabits) : [];
+
+      setHabits(savedHabits);
     }
   }
 
@@ -119,8 +162,10 @@ export default function HomeScreen() {
 
   async function deleteHabit(id: string) {
     const habitToDelete = habits.find((habit) => habit.id === id);
+    const storedDemoMode = await AsyncStorage.getItem('demoMode');
+    const isDemoMode = storedDemoMode === 'true';
 
-    if (habitToDelete?.firestoreId) {
+    if (habitToDelete?.firestoreId && !isDemoMode) {
       try {
         await deleteHabitFromFirestore(habitToDelete.firestoreId);
         console.log('Habit deleted from Firestore');
@@ -176,20 +221,6 @@ export default function HomeScreen() {
           'Please edit this habit and choose a reminder time.'
         );
         return;
-      }
-
-      const [time, modifier] = reminderTime.split(' ');
-      const [hourText, minuteText] = time.split(':');
-
-      let hour = Number(hourText);
-      const minute = Number(minuteText);
-
-      if (modifier === 'PM' && hour !== 12) {
-        hour = hour + 12;
-      }
-
-      if (modifier === 'AM' && hour === 12) {
-        hour = 0;
       }
 
       await Notifications.scheduleNotificationAsync({

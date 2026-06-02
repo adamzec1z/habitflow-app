@@ -9,7 +9,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { logoutUser } from '../../services/authService';
 
 export default function SettingsScreen() {
   const [voiceEnabled, setVoiceEnabled] = useState(true);
@@ -56,24 +55,6 @@ export default function SettingsScreen() {
   async function saveDarkModeSetting(value: boolean) {
     setDarkMode(value);
     await AsyncStorage.setItem('darkMode', String(value));
-  }
-
-  async function handleLogout() {
-    try {
-      await logoutUser();
-
-      Alert.alert(
-        'Logged out',
-        'You have been logged out.'
-      );
-
-      router.replace('/login');
-    } catch (error: any) {
-      Alert.alert(
-        'Logout error',
-        error.message || 'Could not log out.'
-      );
-    }
   }
 
   async function clearAllData() {
@@ -192,15 +173,6 @@ export default function SettingsScreen() {
       </View>
 
       <TouchableOpacity
-        style={styles.logoutButton}
-        onPress={handleLogout}
-      >
-        <Text style={styles.logoutButtonText}>
-          Logout
-        </Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
         style={styles.deleteButton}
         onPress={clearAllData}
       >
@@ -293,21 +265,6 @@ const styles = StyleSheet.create({
 
   darkText: {
     color: '#CCCCCC',
-    fontFamily: 'PixelifySans_400Regular',
-  },
-
-  logoutButton: {
-    backgroundColor: '#4C6FFF',
-    padding: 16,
-    borderRadius: 14,
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-
-  logoutButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 16,
     fontFamily: 'PixelifySans_400Regular',
   },
 

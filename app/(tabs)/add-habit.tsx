@@ -62,12 +62,30 @@ export default function AddHabitScreen() {
 
     const newHabit = {
       id: Date.now().toString(),
-      name: name,
-      category: category,
+      firestoreId: '',
+      name: name.trim(),
+      category: category.trim(),
       reminderTime: reminderTime,
       completed: false,
       streak: 0,
     };
+
+    try {
+      const userId = auth.currentUser?.uid || 'demo-user';
+
+      const firestoreHabit = await createHabit(userId, {
+        name: newHabit.name,
+        category: newHabit.category || 'General',
+        frequency: 'Daily',
+        reminderTime: newHabit.reminderTime,
+      });
+
+      newHabit.firestoreId = firestoreHabit.id;
+
+      console.log('Habit backup saved to Firestore');
+    } catch (error) {
+      console.log('Firestore backup failed:', error);
+    }
 
     const storedHabits = await AsyncStorage.getItem('habits');
 
@@ -81,21 +99,6 @@ export default function AddHabitScreen() {
       'habits',
       JSON.stringify(habits)
     );
-
-    try {
-      const userId = auth.currentUser?.uid || 'demo-user';
-
-      await createHabit(userId, {
-        name: name,
-        category: category || 'General',
-        frequency: 'Daily',
-        reminderTime: reminderTime,
-      });
-
-      console.log('Habit backup saved to Firestore');
-    } catch (error) {
-      console.log('Firestore backup failed:', error);
-    }
 
     Alert.alert(
       'Habit saved',

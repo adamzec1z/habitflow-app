@@ -1,9 +1,9 @@
-
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { router, useFocusEffect } from 'expo-router';
 import * as Speech from 'expo-speech';
 import { useCallback, useState } from 'react';
+import { deleteHabit as deleteHabitFromFirestore } from '../../services/habitService';
 import {
   Alert,
   Image,
@@ -32,6 +32,7 @@ Notifications.setNotificationHandler({
 
 type Habit = {
   id: string;
+  firestoreId?: string;
   name: string;
   category: string;
   reminderTime: string;
@@ -45,7 +46,7 @@ export default function HomeScreen() {
   const [darkMode, setDarkMode] = useState(false);
 
   const [fontsLoaded] = useFonts({
-  PixelifySans_400Regular,
+    PixelifySans_400Regular,
   });
 
   const moods = [
@@ -66,7 +67,6 @@ export default function HomeScreen() {
       image: require('../../assets/images/moods/sleepy.png'),
     },
   ];
-
 
   useFocusEffect(
     useCallback(() => {
@@ -118,86 +118,97 @@ export default function HomeScreen() {
   }
 
   async function deleteHabit(id: string) {
+    const habitToDelete = habits.find((habit) => habit.id === id);
+
+    if (habitToDelete?.firestoreId) {
+      try {
+        await deleteHabitFromFirestore(habitToDelete.firestoreId);
+        console.log('Habit deleted from Firestore');
+      } catch (error) {
+        console.log('Firestore delete failed:', error);
+      }
+    }
+
     const updatedHabits = habits.filter((habit) => habit.id !== id);
 
     setHabits(updatedHabits);
     await AsyncStorage.setItem('habits', JSON.stringify(updatedHabits));
   }
 
-async function startVoiceReminder(
-  habitName: string,
-  reminderTime: string
-) {
-  const storedVoice = await AsyncStorage.getItem('voiceEnabled');
-  const storedNotifications = await AsyncStorage.getItem(
-    'notificationsEnabled'
-  );
+  async function startVoiceReminder(
+    habitName: string,
+    reminderTime: string
+  ) {
+    const storedVoice = await AsyncStorage.getItem('voiceEnabled');
+    const storedNotifications = await AsyncStorage.getItem(
+      'notificationsEnabled'
+    );
 
-  const voiceEnabled =
-    storedVoice === null ? true : storedVoice === 'true';
+    const voiceEnabled =
+      storedVoice === null ? true : storedVoice === 'true';
 
-  const notificationsEnabled =
-    storedNotifications === null
-      ? true
-      : storedNotifications === 'true';
+    const notificationsEnabled =
+      storedNotifications === null
+        ? true
+        : storedNotifications === 'true';
 
-  const message = `Time to complete your ${habitName} habit`;
+    const message = `Time to complete your ${habitName} habit`;
 
-  if (voiceEnabled) {
-    Speech.speak(message);
+    if (voiceEnabled) {
+      Speech.speak(message);
+    }
+
+    if (notificationsEnabled) {
+      const permission =
+        await Notifications.requestPermissionsAsync();
+
+      if (!permission.granted) {
+        Alert.alert(
+          'Permission required',
+          'Please allow notifications.'
+        );
+        return;
+      }
+
+      if (!reminderTime || reminderTime === 'No reminder') {
+        Alert.alert(
+          'No reminder time',
+          'Please edit this habit and choose a reminder time.'
+        );
+        return;
+      }
+
+      const [time, modifier] = reminderTime.split(' ');
+      const [hourText, minuteText] = time.split(':');
+
+      let hour = Number(hourText);
+      const minute = Number(minuteText);
+
+      if (modifier === 'PM' && hour !== 12) {
+        hour = hour + 12;
+      }
+
+      if (modifier === 'AM' && hour === 12) {
+        hour = 0;
+      }
+
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: 'HabitFlow Reminder',
+          body: `${message} at ${reminderTime || 'your selected time'}`,
+        },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+          seconds: 5,
+        },
+      });
+    }
+
+    Alert.alert(
+      'Reminder scheduled',
+      `Reminder set for ${habitName} at ${reminderTime}`
+    );
   }
-
-  if (notificationsEnabled) {
-    const permission =
-      await Notifications.requestPermissionsAsync();
-
-    if (!permission.granted) {
-      Alert.alert(
-        'Permission required',
-        'Please allow notifications.'
-      );
-      return;
-    }
-
-    if (!reminderTime || reminderTime === 'No reminder') {
-      Alert.alert(
-        'No reminder time',
-        'Please edit this habit and choose a reminder time.'
-      );
-      return;
-    }
-
-    const [time, modifier] = reminderTime.split(' ');
-    const [hourText, minuteText] = time.split(':');
-
-    let hour = Number(hourText);
-    const minute = Number(minuteText);
-
-    if (modifier === 'PM' && hour !== 12) {
-      hour = hour + 12;
-    }
-
-    if (modifier === 'AM' && hour === 12) {
-      hour = 0;
-    }
-
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: 'HabitFlow Reminder',
-        body: `${message} at ${reminderTime || 'your selected time'}`,
-      },
-      trigger: {
-        type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-        seconds: 5, // For demo purposes, the notification will trigger after 10 seconds. In a real app, you would calculate the time until the reminderTime and use that value here.
-      },
-    });
-  }
-
-  Alert.alert(
-    'Reminder scheduled',
-    `Reminder set for ${habitName} at ${reminderTime}`
-  );
-}
 
   const completedCount = habits.filter((habit) => habit.completed).length;
 
@@ -205,7 +216,7 @@ async function startVoiceReminder(
     habits.length === 0
       ? 0
       : Math.round((completedCount / habits.length) * 100);
-  
+
   return (
     <ScrollView
       style={[
@@ -216,7 +227,7 @@ async function startVoiceReminder(
       <Text style={[styles.title, darkMode && styles.darkTitle]}>
         HabitFlow
       </Text>
-      
+
       <Text style={[styles.subtitle, darkMode && styles.darkText]}>
         Build habits. Keep streaks. Level up.
       </Text>
@@ -240,21 +251,27 @@ async function startVoiceReminder(
 
       <View style={styles.statsRow}>
         <View style={[styles.statCard, darkMode && styles.darkCard]}>
-          <Text style={[styles.statNumber, darkMode && styles.darkStatNumber]}>{progress}%</Text>
+          <Text style={[styles.statNumber, darkMode && styles.darkStatNumber]}>
+            {progress}%
+          </Text>
           <Text style={[styles.statLabel, darkMode && styles.darkStatLabel]}>
             Progress
           </Text>
         </View>
 
         <View style={[styles.statCard, darkMode && styles.darkCard]}>
-          <Text style={[styles.statNumber, darkMode && styles.darkStatNumber]}>{habits.length}</Text>
+          <Text style={[styles.statNumber, darkMode && styles.darkStatNumber]}>
+            {habits.length}
+          </Text>
           <Text style={[styles.statLabel, darkMode && styles.darkStatLabel]}>
             Habits
           </Text>
         </View>
 
         <View style={[styles.statCard, darkMode && styles.darkCard]}>
-          <Text style={[styles.statNumber, darkMode && styles.darkStatNumber]}>{completedCount}</Text>
+          <Text style={[styles.statNumber, darkMode && styles.darkStatNumber]}>
+            {completedCount}
+          </Text>
           <Text style={[styles.statLabel, darkMode && styles.darkStatLabel]}>
             Completed
           </Text>
@@ -366,23 +383,23 @@ async function startVoiceReminder(
           How are you feeling today?
         </Text>
 
-      <View style={styles.moodRow}>
-        {moods.map((mood) => (
-          <TouchableOpacity
-            key={mood.id}
-            onPress={() => setSelectedMood(mood.id)}
-            style={[
-              styles.moodButton,
-              selectedMood === mood.id && styles.selectedMood,
-        ]}
-    >
-      <Image
-        source={mood.image}
-        style={styles.moodIcon}
-      />
-    </TouchableOpacity>
-  ))}
-</View>
+        <View style={styles.moodRow}>
+          {moods.map((mood) => (
+            <TouchableOpacity
+              key={mood.id}
+              onPress={() => saveMood(mood.id)}
+              style={[
+                styles.moodButton,
+                selectedMood === mood.id && styles.selectedMood,
+              ]}
+            >
+              <Image
+                source={mood.image}
+                style={styles.moodIcon}
+              />
+            </TouchableOpacity>
+          ))}
+        </View>
 
         {selectedMood !== '' && (
           <Text style={styles.selectedMoodText}>
@@ -570,7 +587,6 @@ const styles = StyleSheet.create({
     color: '#666',
     marginTop: 4,
     fontFamily: 'PixelifySans_400Regular',
-
   },
 
   checkMark: {
@@ -667,7 +683,7 @@ const styles = StyleSheet.create({
     width: 65,
     height: 70,
     resizeMode: 'contain',
-},
+  },
 
   selectedMood: {
     backgroundColor: '#DDE5FF',

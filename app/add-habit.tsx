@@ -10,8 +10,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { auth } from '../../services/firebase';
-import { createHabit } from '../../services/habitService';
+import { auth } from '../services/firebase';
+import { createHabit } from '../services/habitService';
 
 export default function AddHabitScreen() {
   const [name, setName] = useState('');

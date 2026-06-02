@@ -10,6 +10,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { auth } from '../../services/firebase';
+import { createHabit } from '../../services/habitService';
 
 export default function AddHabitScreen() {
   const [name, setName] = useState('');
@@ -79,6 +81,21 @@ export default function AddHabitScreen() {
       'habits',
       JSON.stringify(habits)
     );
+
+    try {
+      const userId = auth.currentUser?.uid || 'demo-user';
+
+      await createHabit(userId, {
+        name: name,
+        category: category || 'General',
+        frequency: 'Daily',
+        reminderTime: reminderTime,
+      });
+
+      console.log('Habit backup saved to Firestore');
+    } catch (error) {
+      console.log('Firestore backup failed:', error);
+    }
 
     Alert.alert(
       'Habit saved',
@@ -276,7 +293,6 @@ const styles = StyleSheet.create({
   darkInput: {
     backgroundColor: '#1E1E1E',
     color: '#FFFFFF',
-    
   },
 
   darkInputText: {
